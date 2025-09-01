@@ -1,0 +1,131 @@
+//PROGRAMACION CONTROL APK Y MINISUMO O SOCCER AMATEUR 2025 
+//FUNCIONA AL 100% CON LA LIPO DE 2 CELDAS Y UN STEP UP HASTA 10V
+#include "BluetoothSerial.h"
+BluetoothSerial SerialBT;
+
+// Pines motores
+//DECLARAMOS ENTRADAS PARA EL PUENTE H AL ARDUINO
+int PWMA=15;  //15
+int AIN2=4;  //2
+int AIN1=2;  //4
+int PWMB=21; //21
+int BIN2=19;  //18
+int BIN1=18;  //19
+int STBY= 5; //5
+int LED=23;
+#define canalENA 0  //PWMA
+#define canalENB 1  //PWMB
+
+// Variable para temporizador
+unsigned long ultimoDato = 0;     
+unsigned long tiempoEspera = 200; // 200 milisegundo sin datos = detener
+
+
+void setup() {
+  Serial.begin(9600);
+  SerialBT.begin("ESP32_MINISUMO");  // Nombre del Bluetooth
+  pinMode(AIN1,OUTPUT);
+  pinMode(AIN2,OUTPUT);
+  pinMode(BIN1,OUTPUT);
+  pinMode(BIN2,OUTPUT);
+  pinMode(STBY,OUTPUT);
+  pinMode(LED,OUTPUT);
+  digitalWrite(AIN1,LOW);  //STOP
+  digitalWrite(AIN2,LOW);
+  digitalWrite(BIN1,LOW);   
+  digitalWrite(BIN2,LOW);  //STOP
+  digitalWrite(STBY,LOW);
+  ledcWrite(canalENA, 0);
+  ledcWrite(canalENB, 0);
+  digitalWrite(LED,HIGH);
+  delay(500);
+  digitalWrite(LED,LOW);
+  delay(500);
+  digitalWrite(LED,HIGH);
+  ledcSetup(canalENA, 1000, 8);
+  ledcAttachPin(PWMA, canalENA);
+
+  ledcSetup(canalENB, 1000, 8);
+  ledcAttachPin(PWMB, canalENB);
+
+}
+
+void loop() {
+  if (SerialBT.available()) {
+    char c = SerialBT.read();
+    Serial.print("Recibido: ");
+    Serial.println(c);
+
+    ultimoDato = millis(); // actualiza el tiempo del último dato
+
+    if (c == 'c') {
+      adelante();
+    } else if (c == 'd') {
+      atras();
+    } else if (c == 'f') {
+      derecha();
+    } else if (c == 'e') {
+      izquierda();
+    } 
+  }
+
+  // Si pasa más del tiempoEspera sin recibir datos -> detener
+  if (millis() - ultimoDato > tiempoEspera) {
+    detener();
+  }
+}
+
+
+void adelante() {
+ digitalWrite(AIN1,HIGH);  //ADELANTE
+ digitalWrite(AIN2,LOW);
+ digitalWrite(BIN1,LOW);   
+ digitalWrite(BIN2,HIGH);  //ADELANTE
+ digitalWrite(STBY,HIGH);
+ ledcWrite(canalENA, 255); //200 EN SOCCER - 255 EN MINISUMO 
+ ledcWrite(canalENB, 255);
+}
+
+void atras() {
+ digitalWrite(AIN1,LOW);  
+ digitalWrite(AIN2,HIGH);  //ATRAS
+ digitalWrite(BIN1,HIGH);  //ATRAS
+ digitalWrite(BIN2,LOW);  
+ digitalWrite(STBY,HIGH);
+ ledcWrite(canalENA, 255); //100 EN SOCCER - 255 EN MINISUMO 
+ ledcWrite(canalENB, 255);
+}
+
+void detener() {
+ // Serial.println("stop");
+  //PARE
+ digitalWrite(AIN1,LOW);  //STOP
+ digitalWrite(AIN2,LOW);
+ digitalWrite(BIN1,LOW);   
+ digitalWrite(BIN2,LOW);  //STOP
+ digitalWrite(STBY,LOW);
+ ledcWrite(canalENA, 0);
+ ledcWrite(canalENB, 0);
+}
+
+void derecha() {
+
+ digitalWrite(AIN1,HIGH);  //DERECHA
+ digitalWrite(AIN2,LOW);
+ digitalWrite(BIN1,LOW);   
+ digitalWrite(BIN2,LOW);  //
+ digitalWrite(STBY,HIGH);
+ ledcWrite(canalENA, 255);
+ ledcWrite(canalENB, 255);
+
+}
+
+void izquierda() {
+ digitalWrite(AIN1,LOW);  //
+ digitalWrite(AIN2,LOW);
+ digitalWrite(BIN1,LOW);   
+ digitalWrite(BIN2,HIGH);  //IZQUIERDA
+ digitalWrite(STBY,HIGH);
+ ledcWrite(canalENA, 255);
+ ledcWrite(canalENB, 255);
+}
